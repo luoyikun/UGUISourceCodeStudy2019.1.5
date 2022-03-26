@@ -16,8 +16,10 @@ namespace UnityEngine.EventSystems
     /// </remarks>
     public class EventSystem : UIBehaviour
     {
+        //系统输入模块列表
         private List<BaseInputModule> m_SystemInputModules = new List<BaseInputModule>();
 
+        //当前输入模块
         private BaseInputModule m_CurrentInputModule;
 
         private  static List<EventSystem> m_EventSystems = new List<EventSystem>();
@@ -149,6 +151,7 @@ namespace UnityEngine.EventSystems
         /// <param name="pointer">Associated EventData.</param>
         public void SetSelectedGameObject(GameObject selected, BaseEventData pointer)
         {
+
             if (m_SelectionGuard)
             {
                 Debug.LogError("Attempting to select " + selected +  "while already selecting an object.");
@@ -162,7 +165,7 @@ namespace UnityEngine.EventSystems
                 return;
             }
 
-            // Debug.Log("Selection: new (" + selected + ") old (" + m_CurrentSelected + ")");
+            Debug.Log("Selection: new (" + selected + ") old (" + m_CurrentSelected + ")");
             ExecuteEvents.Execute(m_CurrentSelected, pointer, ExecuteEvents.deselectHandler);
             m_CurrentSelected = selected;
             ExecuteEvents.Execute(m_CurrentSelected, pointer, ExecuteEvents.selectHandler);
@@ -341,8 +344,12 @@ namespace UnityEngine.EventSystems
         {
             if (current != this)
                 return;
+
+            //遍历m_SystemInputModules，如果其中的Module不为null，则调用UpdateModule方法
             TickModules();
 
+            //遍历m_SystemInputModules判断其中的输入模块是否支持当前平台
+            //如果支持并且可以激活，则将其赋值给当前输入模块并Break
             bool changedModule = false;
             for (var i = 0; i < m_SystemInputModules.Count; i++)
             {
@@ -358,6 +365,7 @@ namespace UnityEngine.EventSystems
                 }
             }
 
+            //如果上面没找到符合条件的模块，则使用第一个支持当前平台的模块
             // no event module set... set the first valid one...
             if (m_CurrentInputModule == null)
             {
@@ -373,6 +381,8 @@ namespace UnityEngine.EventSystems
                 }
             }
 
+            //如果当前模块没有发生变化并且当前模块不为空
+            //Process()方法主要是将各种输入事件（如点击、拖拽等事件）传递给EventSystem当前选中的GameObject(即m_CurrentSelected)
             if (!changedModule && m_CurrentInputModule != null)
                 m_CurrentInputModule.Process();
         }

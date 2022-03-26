@@ -46,6 +46,7 @@ namespace UnityEngine.EventSystems
                 {
                     pointerId = id,
                 };
+                Debug.Log("GetPointerData:" + id + "--true");
                 m_PointerData.Add(id, data);
                 return true;
             }

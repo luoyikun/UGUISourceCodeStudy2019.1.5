@@ -577,7 +577,7 @@ namespace UnityEngine.EventSystems
         }
 
         /// <summary>
-        /// Calculate and process any mouse button state changes.
+        /// Calculate and process any mouse button state changes.计算和处理任何鼠标按钮状态的变化
         /// </summary>
         protected void ProcessMousePress(MouseButtonEventData data)
         {

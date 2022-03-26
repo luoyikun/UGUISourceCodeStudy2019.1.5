@@ -603,8 +603,10 @@ namespace UnityEngine.UI
         /// <summary>
         /// Call to update the geometry of the Graphic onto the CanvasRenderer.
         /// </summary>
+        /// //调用该函数将图形的几何网格更新到CanvasRenderer上。 
         protected virtual void UpdateGeometry()
         {
+            //Image、RawImage、Text会在构造函数中将其设置为false
             if (useLegacyMeshGeneration)
             {
                 DoLegacyMeshGeneration();
@@ -618,10 +620,16 @@ namespace UnityEngine.UI
         private void DoMeshGeneration()
         {
             if (rectTransform != null && rectTransform.rect.width >= 0 && rectTransform.rect.height >= 0)
+            {
+                //UI元素需要生成顶点时的回调函数，用以填充顶点缓冲区的数据
+                //其子类重写了这个方法
                 OnPopulateMesh(s_VertexHelper);
+            }
             else
                 s_VertexHelper.Clear(); // clear the vertex helper so invalid graphics dont draw.
 
+            //获取当前对象是否有IMeshModifier接口，
+            //Text的描边和阴影都是通过它的ModifyMesh方法实现的
             var components = ListPool<Component>.Get();
             GetComponents(typeof(IMeshModifier), components);
 
@@ -631,6 +639,7 @@ namespace UnityEngine.UI
             ListPool<Component>.Release(components);
 
             s_VertexHelper.FillMesh(workerMesh);
+            //设置渲染所需的网格信息
             canvasRenderer.SetMesh(workerMesh);
         }
 

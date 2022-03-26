@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine.UI.Collections
 {
+    //快速索引集
     internal class IndexedSet<T> : IList<T>
     {
         //This is a container that gives:

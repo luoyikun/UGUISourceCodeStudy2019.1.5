@@ -128,15 +128,19 @@ namespace UnityEngine.EventSystems
             return true;
         }
 
+        //用于检测3D物理元素，并且保存被射线检测到物体的数据
         public override void Raycast(PointerEventData eventData, List<RaycastResult> resultAppendList)
         {
             Ray ray = new Ray();
             float distanceToClipPlane = 0;
+            //判断是否超出摄像机的远近裁剪平面的距离
             if (!ComputeRayAndDistance(eventData, ref ray, ref distanceToClipPlane))
                 return;
 
             int hitCount = 0;
 
+            //采用ReflectionMethodsCache.Singleton.raycast3DAll()来获取所有射线照射到的对象
+            //用反射的方式把Physics.RaycastAll()方法缓存下来，让Unity的Physics模块与UI模块，保持低耦合，没有过分依赖。
             if (m_MaxRayIntersections == 0)
             {
                 if (ReflectionMethodsCache.Singleton.raycast3DAll == null)
@@ -161,7 +165,7 @@ namespace UnityEngine.EventSystems
 
             if (hitCount > 1)
                 System.Array.Sort(m_Hits, (r1, r2) => r1.distance.CompareTo(r2.distance));
-
+            //获取到被射线照射到的对象，根据距离进行排序，然后包装成RaycastResult,加入到resultAppendList中
             if (hitCount != 0)
             {
                 for (int b = 0, bmax = hitCount; b < bmax; ++b)

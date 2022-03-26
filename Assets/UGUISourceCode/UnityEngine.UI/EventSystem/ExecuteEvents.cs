@@ -235,9 +235,12 @@ namespace UnityEngine.EventSystems
 
         private static readonly ObjectPool<List<IEventSystemHandler>> s_HandlerListPool = new ObjectPool<List<IEventSystemHandler>>(null, l => l.Clear());
 
+        //外部统一调法，执行事件
         public static bool Execute<T>(GameObject target, BaseEventData eventData, EventFunction<T> functor) where T : IEventSystemHandler
         {
+            //从对象池中取出一个IEventSystemHandler类型的元素
             var internalHandlers = s_HandlerListPool.Get();
+            //获取指定对象(target)的事件,并保存在internalHandlers中
             GetEventList<T>(target, internalHandlers);
             //  if (s_InternalHandlers.Count > 0)
             //      Debug.Log("Executinng " + typeof (T) + " on " + target);
@@ -258,6 +261,7 @@ namespace UnityEngine.EventSystems
 
                 try
                 {
+                    //执行事件
                     functor(arg, eventData);
                 }
                 catch (Exception e)
@@ -330,24 +334,29 @@ namespace UnityEngine.EventSystems
         /// <summary>
         /// Whether the specified game object will be able to handle the specified event.
         /// </summary>
+        /// // 指定的游戏对象是否能够处理指定的事件
         public static bool CanHandleEvent<T>(GameObject go) where T : IEventSystemHandler
         {
+            
             var internalHandlers = s_HandlerListPool.Get();
             GetEventList<T>(go, internalHandlers);
             var handlerCount = internalHandlers.Count;
             s_HandlerListPool.Release(internalHandlers);
+            Debug.Log("CanHandleEvent:" + go.name + "--handlerCount:" + handlerCount);
             return handlerCount != 0;
         }
 
         /// <summary>
         /// Bubble the specified event on the game object, figuring out which object will actually receive the event.
         /// </summary>
+        /// // 在游戏对象上冒泡指定的事件，找出哪个对象将实际接收事件。
         public static GameObject GetEventHandler<T>(GameObject root) where T : IEventSystemHandler
         {
             if (root == null)
                 return null;
 
             Transform t = root.transform;
+            //冒泡查找,如果物体本身不能处理输入的事件,交予parent处理
             while (t != null)
             {
                 if (CanHandleEvent<T>(t.gameObject))

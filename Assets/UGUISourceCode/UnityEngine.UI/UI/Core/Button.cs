@@ -12,7 +12,7 @@ namespace UnityEngine.UI
     {
         [Serializable]
         /// <summary>
-        /// Function definition for a button click event.
+        /// Function definition for a button click event.定义一个点击事件
         /// </summary>
         public class ButtonClickedEvent : UnityEvent {}
 
@@ -51,12 +51,14 @@ namespace UnityEngine.UI
         /// }
         ///</code>
         ///</example>
+        ///常用的onClick.AddListener()就是监听这个事件
         public ButtonClickedEvent onClick
         {
             get { return m_OnClick; }
             set { m_OnClick = value; }
         }
 
+        //如果按钮处于活跃状态并且可交互(Interactable设置为true)，则触发事件
         private void Press()
         {
             if (!IsActive() || !IsInteractable())
@@ -99,9 +101,10 @@ namespace UnityEngine.UI
         /// }
         /// </code>
         /// </example>
-
+        //鼠标点击时调用该函数，继承自 IPointerClickHandler 接口
         public virtual void OnPointerClick(PointerEventData eventData)
         {
+            //鼠标左、中、右键都会触发该函数，只不过Button在实现OnPointerClick()函数时忽略了鼠标中键和右键，使得只有左键能触发Button的点击事件
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
 

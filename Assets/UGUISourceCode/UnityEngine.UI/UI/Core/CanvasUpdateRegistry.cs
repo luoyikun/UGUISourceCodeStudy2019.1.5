@@ -12,26 +12,32 @@ namespace UnityEngine.UI
         /// <summary>
         /// Called before layout.
         /// </summary>
+        /// 布局重建前
         Prelayout = 0,
         /// <summary>
         /// Called for layout.
         /// </summary>
+        /// 布局重建
         Layout = 1,
         /// <summary>
         /// Called after layout.
         /// </summary>
+        /// 布局重建后
         PostLayout = 2,
         /// <summary>
         /// Called before rendering.
         /// </summary>
+        /// 渲染前(图形重建前)
         PreRender = 3,
         /// <summary>
         /// Called late, before render.
         /// </summary>
+        /// PreRender后，渲染前
         LatePreRender = 4,
         /// <summary>
         /// Max enum value. Always last.
         /// </summary>
+        /// 最大枚举值
         MaxUpdateValue = 5
     }
 
@@ -44,27 +50,34 @@ namespace UnityEngine.UI
         /// Rebuild the element for the given stage.
         /// </summary>
         /// <param name="executing">The current CanvasUpdate stage being rebuild.</param>
+        ///  // 根据CanvasUpdate的不同阶段重建元素
         void Rebuild(CanvasUpdate executing);
 
         /// <summary>
         /// Get the transform associated with the ICanvasElement.
         /// </summary>
+        /// // 获取ICanvasElement关联的变换组件
         Transform transform { get; }
 
         /// <summary>
         /// Callback sent when this ICanvasElement has completed layout.
         /// </summary>
+        ///  // 布局重建完成的回调函数
         void LayoutComplete();
 
         /// <summary>
         /// Callback sent when this ICanvasElement has completed Graphic rebuild.
         /// </summary>
+        ///  // 图形重建完成的回调函数
         void GraphicUpdateComplete();
 
         /// <summary>
+
+
         /// Used if the native representation has been destroyed.
         /// </summary>
         /// <returns>Return true if the element is considered destroyed.</returns>
+        ///  // 是否被销毁
         bool IsDestroyed();
     }
 
@@ -78,11 +91,15 @@ namespace UnityEngine.UI
         private bool m_PerformingLayoutUpdate;
         private bool m_PerformingGraphicUpdate;
 
+        //布局重建队列，当UI元素的布局需要更新时将其加入队列
         private readonly IndexedSet<ICanvasElement> m_LayoutRebuildQueue = new IndexedSet<ICanvasElement>();
+
+        //图形重建队列，当UI元素的图像需要更新时将其加入队列
         private readonly IndexedSet<ICanvasElement> m_GraphicRebuildQueue = new IndexedSet<ICanvasElement>();
 
         protected CanvasUpdateRegistry()
         {
+            //监听了Canvas的willRenderCanvases事件，这个事件会在渲染前进行每帧调用
             Canvas.willRenderCanvases += PerformUpdate;
         }
 
@@ -155,11 +172,13 @@ namespace UnityEngine.UI
         private void PerformUpdate()
         {
             UISystemProfilerApi.BeginSample(UISystemProfilerApi.SampleType.Layout);
+            //清理Queue中值为null或者被销毁的元素
             CleanInvalidItems();
 
             m_PerformingLayoutUpdate = true;
 
-            m_LayoutRebuildQueue.Sort(s_SortLayoutFunction);
+            //根据父节点多少排序(层级)
+            m_LayoutRebuildQueue.Sort(s_SortLayoutFunction);//父节点越少在越前面
             for (int i = 0; i <= (int)CanvasUpdate.PostLayout; i++)
             {
                 for (int j = 0; j < m_LayoutRebuildQueue.Count; j++)
@@ -168,7 +187,10 @@ namespace UnityEngine.UI
                     try
                     {
                         if (ObjectValidForUpdate(rebuild))
+                        {
+                            //布局重建，分别传入 Prelayout 、Layout 、PostLayout参数，布局的3个阶段
                             rebuild.Rebuild((CanvasUpdate)i);
+                        }
                     }
                     catch (Exception e)
                     {
@@ -177,6 +199,7 @@ namespace UnityEngine.UI
                 }
             }
 
+            //通知布局重建完成
             for (int i = 0; i < m_LayoutRebuildQueue.Count; ++i)
                 m_LayoutRebuildQueue[i].LayoutComplete();
 
@@ -184,6 +207,7 @@ namespace UnityEngine.UI
             m_PerformingLayoutUpdate = false;
 
             // now layout is complete do culling...
+            //执行裁剪(cull)操作
             ClipperRegistry.instance.Cull();
 
             m_PerformingGraphicUpdate = true;
@@ -195,7 +219,10 @@ namespace UnityEngine.UI
                     {
                         var element = instance.m_GraphicRebuildQueue[k];
                         if (ObjectValidForUpdate(element))
+                        {
+                            //图形重建，分别传入PreRender、LatePreRender参数
                             element.Rebuild((CanvasUpdate)i);
+                        }
                     }
                     catch (Exception e)
                     {
@@ -203,7 +230,7 @@ namespace UnityEngine.UI
                     }
                 }
             }
-
+            //通知图形重建完成
             for (int i = 0; i < m_GraphicRebuildQueue.Count; ++i)
                 m_GraphicRebuildQueue[i].GraphicUpdateComplete();
 
@@ -240,6 +267,7 @@ namespace UnityEngine.UI
         /// Will not return if successfully added.
         /// </summary>
         /// <param name="element">The element that is needing rebuilt.</param>
+        /// //向m_LayoutRebuildQueue中添加元素
         public static void RegisterCanvasElementForLayoutRebuild(ICanvasElement element)
         {
             instance.InternalRegisterCanvasElementForLayoutRebuild(element);
@@ -253,11 +281,14 @@ namespace UnityEngine.UI
         /// True if the element was successfully added to the rebuilt list.
         /// False if either already inside a Graphic Update loop OR has already been added to the list.
         /// </returns>
+        /// //尝试向m_LayoutRebuildQueue中添加元素
+        //并返回执行结果(True->成功， False->失败)
         public static bool TryRegisterCanvasElementForLayoutRebuild(ICanvasElement element)
         {
             return instance.InternalRegisterCanvasElementForLayoutRebuild(element);
         }
 
+        //如果队列中不存在element元素，则添加
         private bool InternalRegisterCanvasElementForLayoutRebuild(ICanvasElement element)
         {
             if (m_LayoutRebuildQueue.Contains(element))
@@ -278,6 +309,7 @@ namespace UnityEngine.UI
         /// Will not return if successfully added.
         /// </summary>
         /// <param name="element">The element that is needing rebuilt.</param>
+        /// //向m_GraphicRebuildQueue中添加元素
         public static void RegisterCanvasElementForGraphicRebuild(ICanvasElement element)
         {
             instance.InternalRegisterCanvasElementForGraphicRebuild(element);
@@ -291,6 +323,7 @@ namespace UnityEngine.UI
         /// True if the element was successfully added to the rebuilt list.
         /// False if either already inside a Graphic Update loop OR has already been added to the list.
         /// </returns>
+        /// //尝试向m_GraphicRebuildQueue中添加元素
         public static bool TryRegisterCanvasElementForGraphicRebuild(ICanvasElement element)
         {
             return instance.InternalRegisterCanvasElementForGraphicRebuild(element);

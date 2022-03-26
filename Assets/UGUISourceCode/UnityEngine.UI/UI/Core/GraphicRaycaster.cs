@@ -120,18 +120,20 @@ namespace UnityEngine.UI
             if (canvas == null)
                 return;
 
+            //返回Canvas上的所有包含Graphic脚本并且raycastTarget=true的游戏物体
             var canvasGraphics = GraphicRegistry.GetGraphicsForCanvas(canvas);
             if (canvasGraphics == null || canvasGraphics.Count == 0)
                 return;
 
             int displayIndex;
+            //画布在ScreenSpaceOverlay模式下默认为null
             var currentEventCamera = eventCamera; // Property can call Camera.main, so cache the reference
 
             if (canvas.renderMode == RenderMode.ScreenSpaceOverlay || currentEventCamera == null)
                 displayIndex = canvas.targetDisplay;
             else
                 displayIndex = currentEventCamera.targetDisplay;
-
+            //获取鼠标位置
             var eventPosition = Display.RelativeMouseAt(eventData.position);
             if (eventPosition != Vector3.zero)
             {
@@ -152,6 +154,7 @@ namespace UnityEngine.UI
                 // We dont really know in which display the event occured. We will process the event assuming it occured in our display.
             }
 
+            //将鼠标点在屏幕上的坐标转换成摄像机的视角坐标,如果超出范围则return
             // Convert to view space
             Vector2 pos;
             if (currentEventCamera == null)
@@ -179,9 +182,12 @@ namespace UnityEngine.UI
 
             Ray ray = new Ray();
 
+            //如果currentEventCamera不为空,摄像机发射射线
             if (currentEventCamera != null)
                 ray = currentEventCamera.ScreenPointToRay(eventPosition);
 
+            //如果当前画布不是ScreenSpaceOverlay模式并且blockingObjects != BlockingObjects.None
+            //计算hitDistance的值
             if (canvas.renderMode != RenderMode.ScreenSpaceOverlay && blockingObjects != BlockingObjects.None)
             {
                 float distanceToClipPlane = 100.0f;
@@ -216,9 +222,11 @@ namespace UnityEngine.UI
             }
 
             m_RaycastResults.Clear();
-
+            //调用Raycast函数重载
             Raycast(canvas, currentEventCamera, eventPosition, canvasGraphics, m_RaycastResults);
 
+            //遍历m_RaycastResults，判断Graphic的方向向量和Camera的方向向量是否相交，然后判断Graphic是否在Camera的前面，
+            //并且距离小于等于hitDistance，满足了这些条件，才会把它打包成RaycastResult添加到resultAppendList里。
             int totalCount = m_RaycastResults.Count;
             for (var index = 0; index < totalCount; index++)
             {
